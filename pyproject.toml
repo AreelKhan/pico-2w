@@ -5,5 +5,7 @@ description = "Learning Rasberry Pi Pico 2"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "micropython-rp2-stubs==1.27.0.post1",
     "mpremote>=1.27.0",
+    "pip>=25.3",
 ]
