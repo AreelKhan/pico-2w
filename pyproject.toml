@@ -7,5 +7,6 @@ requires-python = ">=3.14"
 dependencies = [
     "micropython-rp2-stubs==1.27.0.post1",
     "mpremote>=1.27.0",
+    "opencv-python>=4.12.0.88",
     "pip>=25.3",
 ]
