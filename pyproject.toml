@@ -10,3 +10,8 @@ dependencies = [
     "opencv-python>=4.12.0.88",
     "pip>=25.3",
 ]
+
+[dependency-groups]
+dev = [
+    "ty>=0.0.7",
+]
