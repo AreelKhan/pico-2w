@@ -47,6 +47,9 @@ def main(argv: list[str] | None = None) -> int:
     except NotImplementedError as e:
         print(str(e), file=sys.stderr)
         return 3
+    except Exception as e:
+        print(f"{type(e).__name__}: {e}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

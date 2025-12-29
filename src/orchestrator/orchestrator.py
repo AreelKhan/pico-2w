@@ -5,7 +5,7 @@ import uuid
 
 from orchestrator.clicker_client import ClickerClient
 from orchestrator.logging_utils import RunLogger
-from orchestrator.models import EndReason, RunRecord
+from orchestrator.models import RunRecord
 from orchestrator.storage import Storage
 
 
@@ -29,11 +29,13 @@ class Orchestrator:
             logger.log(f"log_path={log_path}")
 
             score = 0.0
+            clicker_exc: Exception | None = None
 
             try:
                 self._clicker.run_script(script)
-            except NotImplementedError as e:
-                logger.log(f"clicker_stub={e}")
+            except Exception as e:
+                clicker_exc = e
+                logger.log(f"clicker_error={type(e).__name__} {e}")
 
             ended_at_ms = int(time.time() * 1000)
             logger.log(
@@ -47,6 +49,8 @@ class Orchestrator:
             score=0.0,
         )
         self._storage.append_run(run)
+        if clicker_exc is not None:
+            raise clicker_exc
         return run_id
 
     def train(self, *, level: str) -> None:
