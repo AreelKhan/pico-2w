@@ -11,6 +11,19 @@ dependencies = [
     "pip>=25.3",
 ]
 
+[build-system]
+requires = ["setuptools>=75.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+robot = "orchestrator.cli:main"
+
 [dependency-groups]
 dev = [
     "ruff>=0.14.10",
