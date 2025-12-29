@@ -17,5 +17,3 @@ def encode_bins(bins: list[int]) -> str:
 
 def expected_run_seconds(*, n_bins: int, bin_ms: int) -> float:
     return (n_bins * bin_ms) / 1000.0
-
-

@@ -61,5 +61,3 @@ class SerialTransport:
     def expect_one_of(value: str, allowed: Iterable[str], *, stage: str) -> None:
         if value not in set(allowed):
             raise RuntimeError(f"Unexpected response during {stage}: {value!r}")
-
-

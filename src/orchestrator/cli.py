@@ -25,7 +25,9 @@ def _build_parser() -> argparse.ArgumentParser:
 
     clicker = sub.add_parser("clicker", help="Manage the Pico clicker device")
     clicker_sub = clicker.add_subparsers(dest="clicker_cmd", required=True)
-    install = clicker_sub.add_parser("install", help="Upload clicker firmware to the Pico")
+    install = clicker_sub.add_parser(
+        "install", help="Upload clicker firmware to the Pico"
+    )
     install.add_argument("--port", default=None)
 
     return p
