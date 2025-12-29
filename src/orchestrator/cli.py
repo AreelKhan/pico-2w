@@ -16,6 +16,8 @@ def _build_parser() -> argparse.ArgumentParser:
     inf = sub.add_parser("inference", help="Run a specific script for a level")
     inf.add_argument("--level", required=True, choices=list_levels())
     inf.add_argument("--script-id", required=True)
+    inf.add_argument("--port", default=None)
+    inf.add_argument("--baud", default=115200, type=int)
 
     tr = sub.add_parser("train", help="Train on a level (stub)")
     tr.add_argument("--level", required=True, choices=list_levels())
@@ -27,7 +29,10 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
 
     storage = Storage()
-    clicker = ClickerClient()
+    clicker = ClickerClient(
+        port=getattr(args, "port", None),
+        baud=getattr(args, "baud", 115200),
+    )
     orch = Orchestrator(storage=storage, clicker=clicker)
 
     try:
