@@ -8,8 +8,7 @@ TARGET_FPS = 30
 
 cap = cv2.VideoCapture(DEVICE, cv2.CAP_V4L2)
 
-# Use MJPEG if supported (often much faster than raw formats)
-cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+cap.set(cv2.CAP_PROP_FOURCC, getattr(cv2, "VideoWriter_fourcc")(*"MJPG"))
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
