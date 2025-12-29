@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import base64
-import glob
 import time
-import uuid
 
-import serial
-import serial.tools.list_ports
-
+from orchestrator.clicker_protocol import encode_bins, expected_run_seconds
 from orchestrator.models import ScriptRecord
+from orchestrator.serial_ports import auto_port
+from orchestrator.serial_transport import SerialTransport
 
-# TODO: this clicker client class feels like a mess.
-# i dont understand it. i gave AI too much free reign
 
 @dataclass(slots=True)
 class ClickerClient:
@@ -21,89 +16,70 @@ class ClickerClient:
     timeout_s: float = 3.0
 
     def run_script(self, script: ScriptRecord) -> None:
-        port = self.port or self._auto_port()
-        with serial.Serial(port, self.baud, timeout=self.timeout_s) as ser:
-            time.sleep(1.8)
-            self._drain(ser)
+        if not script.script_id:
+            raise ValueError("script_id is required")
 
-            self._sendline(ser, "PING")
-            if self._readline(ser) != "PONG":
-                raise RuntimeError("Pico did not respond to PING")
+        port = self.port or auto_port()
+        transport = SerialTransport(port=port, baud=self.baud, timeout_s=self.timeout_s)
+
+        with transport.open() as ser:
+            time.sleep(1.8)
+            transport.drain(ser)
+
+            transport.sendline(ser, "PING")
+            transport.expect_one_of(
+                transport.readline(ser, stage="PING"),
+                ["PONG"],
+                stage="PING",
+            )
 
             script_id = script.script_id
             n = len(script.bins)
 
-            self._sendline(ser, f"LOAD {script_id} {int(script.bin_ms)} {n}")
-            if self._readline(ser) != f"LOADED {script_id}":
-                raise RuntimeError("Unexpected response to LOAD")
+            transport.sendline(ser, f"LOAD {script_id} {int(script.bin_ms)} {n}")
+            transport.expect_one_of(
+                transport.readline(ser, stage="LOAD"),
+                [f"LOADED {script_id}"],
+                stage="LOAD",
+            )
 
-            payload = self._encode_bins(script.bins)
-            self._sendline(ser, f"DATA {script_id} {payload}")
-            if self._readline(ser) != f"DATA_OK {script_id}":
-                raise RuntimeError("Unexpected response to DATA")
+            payload = encode_bins(script.bins)
+            transport.sendline(ser, f"DATA {script_id} {payload}")
+            transport.expect_one_of(
+                transport.readline(ser, stage="DATA"),
+                [f"DATA_OK {script_id}"],
+                stage="DATA",
+            )
 
-            self._sendline(ser, f"START {script_id}")
-            if self._readline(ser) != f"STARTED {script_id}":
-                raise RuntimeError("Unexpected response to START")
+            transport.sendline(ser, f"START {script_id}")
+            transport.expect_one_of(
+                transport.readline(ser, stage="START"),
+                [f"STARTED {script_id}"],
+                stage="START",
+            )
 
-            expected_run_s = (n * int(script.bin_ms)) / 1000.0
             old_timeout = ser.timeout
-            ser.timeout = max(float(self.timeout_s), expected_run_s + 2.0)
+            ser.timeout = max(
+                float(self.timeout_s),
+                expected_run_seconds(n_bins=n, bin_ms=int(script.bin_ms)) + 2.0,
+            )
             try:
-                done = self._readline(ser)
+                done = transport.readline(ser, stage="DONE")
             finally:
                 ser.timeout = old_timeout
-            if done != f"DONE {script_id}" and done != f"STOPPED {script_id}":
-                raise RuntimeError(f"Unexpected completion response: {done!r}")
+
+            transport.expect_one_of(
+                done,
+                [f"DONE {script_id}", f"STOPPED {script_id}"],
+                stage="DONE",
+            )
 
     def stop(self) -> str:
-        port = self.port or self._auto_port()
-        with serial.Serial(port, self.baud, timeout=self.timeout_s) as ser:
+        port = self.port or auto_port()
+        transport = SerialTransport(port=port, baud=self.baud, timeout_s=self.timeout_s)
+
+        with transport.open() as ser:
             time.sleep(0.5)
-            self._drain(ser)
-            self._sendline(ser, "STOP")
-            return self._readline(ser)
-
-    @staticmethod
-    def _encode_bins(bins: list[int]) -> str:
-        n = len(bins)
-        nbytes = (n + 7) // 8
-        buf = bytearray(nbytes)
-        for i, b in enumerate(bins):
-            if b:
-                byte_i = i // 8
-                bit = 7 - (i % 8)
-                buf[byte_i] |= 1 << bit
-        return base64.b64encode(bytes(buf)).decode("ascii")
-
-    @staticmethod
-    def _sendline(ser: serial.Serial, line: str) -> None:
-        ser.write((line + "\n").encode("utf-8"))
-
-    @staticmethod
-    def _readline(ser: serial.Serial) -> str:
-        line = ser.readline()
-        if not line:
-            raise TimeoutError("Timed out waiting for Pico response")
-        return line.decode("utf-8", errors="replace").strip()
-
-    @staticmethod
-    def _drain(ser: serial.Serial) -> None:
-        old_timeout = ser.timeout
-        ser.timeout = 0.05
-        while True:
-            b = ser.readline()
-            if not b:
-                break
-        ser.timeout = old_timeout
-
-    @staticmethod
-    def _auto_port() -> str:
-        ports = list(serial.tools.list_ports.comports())
-        for p in ports:
-            if p.device and ("ttyACM" in p.device or "ttyUSB" in p.device):
-                return p.device
-        globs = sorted(glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"))
-        if globs:
-            return globs[0]
-        raise FileNotFoundError("No serial port found (tried /dev/ttyACM* and /dev/ttyUSB*)")
+            transport.drain(ser)
+            transport.sendline(ser, "STOP")
+            return transport.readline(ser, stage="STOP")
