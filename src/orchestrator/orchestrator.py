@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 import uuid
 
-from orchestrator.clicker_client import ClickerClient
+from orchestrator.clicker.client import ClickerClient
 from orchestrator.logging_utils import RunLogger
 from orchestrator.models import RunRecord
 from orchestrator.storage import Storage

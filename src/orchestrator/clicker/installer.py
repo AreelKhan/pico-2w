@@ -5,16 +5,16 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from orchestrator.serial_ports import auto_port
+from orchestrator.clicker.serial_ports import auto_port
 
 
 @dataclass(slots=True)
 class PicoInstaller:
     port: str | None = None
 
-    def install_clicker(self) -> None:
+    def install(self) -> None:
         port = self.port or auto_port()
-        root = Path(__file__).resolve().parents[2]
+        root = Path(__file__).resolve().parents[3]
         src_clicker = root / "src" / "clicker"
 
         self._cp(port, src_clicker / "main.py", ":main.py")
@@ -24,17 +24,7 @@ class PicoInstaller:
 
     @staticmethod
     def _cp(port: str, src: Path, dest: str) -> None:
-        cmd = [
-            sys.executable,
-            "-m",
-            "mpremote",
-            "connect",
-            port,
-            "fs",
-            "cp",
-            str(src),
-            dest,
-        ]
+        cmd = [sys.executable, "-m", "mpremote", "connect", port, "fs", "cp", str(src), dest]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode != 0:
             raise RuntimeError(
@@ -55,3 +45,5 @@ class PicoInstaller:
                 f"stdout={res.stdout}\n"
                 f"stderr={res.stderr}"
             )
+
+

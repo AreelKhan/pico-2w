@@ -3,10 +3,10 @@ from __future__ import annotations
 import argparse
 import sys
 
-from orchestrator.clicker_client import ClickerClient
+from orchestrator.clicker.client import ClickerClient
+from orchestrator.clicker.installer import PicoInstaller
 from orchestrator.levels import list_levels
 from orchestrator.orchestrator import Orchestrator
-from orchestrator.pico_installer import PicoInstaller
 from orchestrator.storage import LevelNotFoundError, ScriptNotFoundError, Storage
 
 
@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.cmd == "clicker":
             if args.clicker_cmd == "install":
-                PicoInstaller(port=args.port).install_clicker()
+                PicoInstaller(port=args.port).install()
                 return 0
             raise AssertionError(f"Unknown clicker command: {args.clicker_cmd}")
 

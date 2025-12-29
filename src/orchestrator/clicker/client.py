@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import time
 
-from orchestrator.clicker_protocol import encode_bins, expected_run_seconds
+from orchestrator.clicker.protocol import encode_bins, expected_run_seconds
+from orchestrator.clicker.serial_ports import auto_port
+from orchestrator.clicker.serial_transport import SerialTransport
 from orchestrator.models import ScriptRecord
-from orchestrator.serial_ports import auto_port
-from orchestrator.serial_transport import SerialTransport
 
 
 @dataclass(slots=True)
@@ -83,3 +83,5 @@ class ClickerClient:
             transport.drain(ser)
             transport.sendline(ser, "STOP")
             return transport.readline(ser, stage="STOP")
+
+

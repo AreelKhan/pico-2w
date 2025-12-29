@@ -39,25 +39,8 @@ class SerialTransport:
             ser.timeout = old_timeout
 
     @staticmethod
-    def set_timeout(ser: serial.Serial, timeout_s: float) -> None:
-        ser.timeout = timeout_s
-
-    @staticmethod
-    def drain_lines(ser: serial.Serial, *, max_lines: int = 50) -> list[str]:
-        lines: list[str] = []
-        old_timeout = ser.timeout
-        ser.timeout = 0.05
-        try:
-            for _ in range(max_lines):
-                b = ser.readline()
-                if not b:
-                    break
-                lines.append(b.decode("utf-8", errors="replace").strip())
-        finally:
-            ser.timeout = old_timeout
-        return lines
-
-    @staticmethod
     def expect_one_of(value: str, allowed: Iterable[str], *, stage: str) -> None:
         if value not in set(allowed):
             raise RuntimeError(f"Unexpected response during {stage}: {value!r}")
+
+

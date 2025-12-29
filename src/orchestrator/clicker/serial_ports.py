@@ -13,6 +13,6 @@ def auto_port() -> str:
     globs = sorted(glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"))
     if globs:
         return globs[0]
-    raise FileNotFoundError(
-        "No serial port found (tried /dev/ttyACM* and /dev/ttyUSB*)"
-    )
+    raise FileNotFoundError("No serial port found (tried /dev/ttyACM* and /dev/ttyUSB*)")
+
+
