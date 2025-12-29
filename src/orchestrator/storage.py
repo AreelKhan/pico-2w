@@ -30,9 +30,7 @@ class Storage:
         self.assert_level_exists(level)
         path = scripts_dir(level) / f"{script_id}.json"
         if not path.exists():
-            raise ScriptNotFoundError(
-                f"Script '{script_id}' not found at {path}."
-            )
+            raise ScriptNotFoundError(f"Script '{script_id}' not found at {path}.")
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
         return ScriptRecord.from_json(data)

@@ -25,5 +25,3 @@ def logs_dir(level: str) -> Path:
 
 def runs_path(level: str) -> Path:
     return level_dir(level) / "runs.jsonl"
-
-

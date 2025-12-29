@@ -13,5 +13,3 @@ def list_levels() -> list[str]:
 
 def is_known_level(level: str) -> bool:
     return level in set(list_levels())
-
-

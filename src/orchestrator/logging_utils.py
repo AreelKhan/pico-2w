@@ -16,5 +16,3 @@ class RunLogger:
     def log(self, msg: str) -> None:
         self.fh.write(f"{_now_iso()} {msg}\n")
         self.fh.flush()
-
-

@@ -49,5 +49,3 @@ class RunRecord:
             "script_id": self.script_id,
             "score": self.score,
         }
-
-
