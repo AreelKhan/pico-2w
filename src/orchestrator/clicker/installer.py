@@ -24,7 +24,17 @@ class PicoInstaller:
 
     @staticmethod
     def _cp(port: str, src: Path, dest: str) -> None:
-        cmd = [sys.executable, "-m", "mpremote", "connect", port, "fs", "cp", str(src), dest]
+        cmd = [
+            sys.executable,
+            "-m",
+            "mpremote",
+            "connect",
+            port,
+            "fs",
+            "cp",
+            str(src),
+            dest,
+        ]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode != 0:
             raise RuntimeError(
@@ -45,5 +55,3 @@ class PicoInstaller:
                 f"stdout={res.stdout}\n"
                 f"stderr={res.stderr}"
             )
-
-

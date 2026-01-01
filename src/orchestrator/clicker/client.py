@@ -83,5 +83,3 @@ class ClickerClient:
             transport.drain(ser)
             transport.sendline(ser, "STOP")
             return transport.readline(ser, stage="STOP")
-
-
