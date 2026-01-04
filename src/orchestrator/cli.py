@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from monitor import Monitor, MonitorStubConfig
 from orchestrator.clicker.client import ClickerClient
 from orchestrator.clicker.installer import PicoInstaller
 from orchestrator.levels import list_levels
@@ -22,6 +23,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
     tr = sub.add_parser("train", help="Train on a level (stub)")
     tr.add_argument("--level", required=True, choices=list_levels())
+    tr.add_argument("--script-id", default="hand_coded_v0")
+    tr.add_argument("--start-timeout-s", type=float, default=3.0)
+    tr.add_argument("--end-timeout-s", type=float, default=30.0)
+    tr.add_argument("--sim-start-delay-s", type=float, default=0.25) # stub config
+    tr.add_argument("--sim-run-duration-s", type=float, default=2.0) # stub config
 
     clicker = sub.add_parser("clicker", help="Manage the Pico clicker device")
     clicker_sub = clicker.add_subparsers(dest="clicker_cmd", required=True)
@@ -41,7 +47,16 @@ def main(argv: list[str] | None = None) -> int:
         port=getattr(args, "port", None),
         baud=getattr(args, "baud", 115200),
     )
-    orch = Orchestrator(storage=storage, clicker=clicker)
+    monitor = None
+    if args.cmd == "train":
+        monitor = Monitor(
+            # TODO: remove the sim start and run duration when unstubbing the monitor
+            stub=MonitorStubConfig(
+                start_delay_s=float(getattr(args, "sim_start_delay_s", 0.25)),
+                run_duration_s=float(getattr(args, "sim_run_duration_s", 2.0)),
+            )
+        )
+    orch = Orchestrator(storage=storage, clicker=clicker, monitor=monitor)
 
     try:
         if args.cmd == "inference":
@@ -50,7 +65,13 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.cmd == "train":
-            orch.train(level=args.level)
+            run_id = orch.train(
+                level=args.level,
+                script_id=args.script_id,
+                start_timeout_s=float(args.start_timeout_s),
+                end_timeout_s=float(args.end_timeout_s),
+            )
+            print(run_id)
             return 0
 
         if args.cmd == "clicker":
