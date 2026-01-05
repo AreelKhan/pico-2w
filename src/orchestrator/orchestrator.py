@@ -111,9 +111,17 @@ class Orchestrator:
                 except (MonitorStartTimeout, MonitorEndTimeout) as e:
                     monitor_exc = e
                     logger.log(f"monitor_timeout={type(e).__name__} {e}")
+                    try:
+                        self._clicker.stop()
+                    except Exception:
+                        pass
                 except Exception as e:
                     monitor_exc = e
                     logger.log(f"monitor_error={type(e).__name__} {e}")
+                    try:
+                        self._clicker.stop()
+                    except Exception:
+                        pass
 
             ended_at_ms = int(time.time() * 1000)
             score_ms = float(obs.score_ms) if obs is not None else 0.0

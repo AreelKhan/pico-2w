@@ -3,7 +3,10 @@ from __future__ import annotations
 import argparse
 import sys
 
-from monitor import Monitor, MonitorStubConfig
+from pathlib import Path
+
+from monitor import Monitor
+from monitor.calibrate import main as monitor_calibrate_main
 from orchestrator.clicker.client import ClickerClient
 from orchestrator.clicker.installer import PicoInstaller
 from orchestrator.levels import list_levels
@@ -26,8 +29,21 @@ def _build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--script-id", default="hand_coded_v0")
     tr.add_argument("--start-timeout-s", type=float, default=3.0)
     tr.add_argument("--end-timeout-s", type=float, default=30.0)
-    tr.add_argument("--sim-start-delay-s", type=float, default=0.25) # stub config
-    tr.add_argument("--sim-run-duration-s", type=float, default=2.0) # stub config
+    tr.add_argument(
+        "--monitor-config",
+        type=Path,
+        default=None,
+    )
+
+    mon = sub.add_parser("monitor", help="Monitor utilities")
+    mon_sub = mon.add_subparsers(dest="monitor_cmd", required=True)
+    mon_cal = mon_sub.add_parser("calibrate", help="Calibrate level end pop ROIs/colors")
+    mon_cal.add_argument("--config", type=Path, default=None)
+    mon_cal.add_argument("--device", type=int, default=0)
+    mon_cal.add_argument("--width", type=int, default=640)
+    mon_cal.add_argument("--height", type=int, default=480)
+    mon_cal.add_argument("--fps", type=int, default=30)
+    mon_cal.add_argument("--fourcc", type=str, default="MJPG", choices=["MJPG", "YUYV"])
 
     clicker = sub.add_parser("clicker", help="Manage the Pico clicker device")
     clicker_sub = clicker.add_subparsers(dest="clicker_cmd", required=True)
@@ -49,13 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     monitor = None
     if args.cmd == "train":
-        monitor = Monitor(
-            # TODO: remove the sim start and run duration when unstubbing the monitor
-            stub=MonitorStubConfig(
-                start_delay_s=float(getattr(args, "sim_start_delay_s", 0.25)),
-                run_duration_s=float(getattr(args, "sim_run_duration_s", 2.0)),
-            )
-        )
+        monitor = Monitor(config_path=getattr(args, "monitor_config", None))
     orch = Orchestrator(storage=storage, clicker=clicker, monitor=monitor)
 
     try:
@@ -73,6 +83,26 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(run_id)
             return 0
+
+        if args.cmd == "monitor":
+            if args.monitor_cmd == "calibrate":
+                argv2 = []
+                if args.config is not None:
+                    argv2 += ["--config", str(args.config)]
+                argv2 += [
+                    "--device",
+                    str(args.device),
+                    "--width",
+                    str(args.width),
+                    "--height",
+                    str(args.height),
+                    "--fps",
+                    str(args.fps),
+                    "--fourcc",
+                    str(args.fourcc),
+                ]
+                return int(monitor_calibrate_main(argv2))
+            raise AssertionError(f"Unknown monitor command: {args.monitor_cmd}")
 
         if args.cmd == "clicker":
             if args.clicker_cmd == "install":

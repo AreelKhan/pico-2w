@@ -3,7 +3,6 @@ from monitor.monitor import (
     MonitorEndTimeout,
     MonitorRuntimeError,
     MonitorStartTimeout,
-    MonitorStubConfig,
     RunObservation,
 )
 
@@ -12,7 +11,6 @@ __all__ = [
     "MonitorEndTimeout",
     "MonitorRuntimeError",
     "MonitorStartTimeout",
-    "MonitorStubConfig",
     "RunObservation",
 ]
 
